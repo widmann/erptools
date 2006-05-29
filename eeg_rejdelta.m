@@ -11,7 +11,8 @@
 %
 % Optional inputs:
 %   'chans'   - channels to take into consideration for rejection
-%   'pnts'    - samples to take into consideration for rejection
+%   'win'     - vector time window to take into consideration for
+%               rejection (ms) {default [EEG.xmin EEG.xmax] * 1000}
 %
 % Output:
 %   EEG       - EEGLAB EEG structure
@@ -42,23 +43,25 @@
 
 function EEG = eeg_rejdelta(EEG, varargin)
 
-args = struct(varargin{:});
+Arg = struct(varargin{:});
 
-if ~isfield(args, 'thresh') || isempty(args.thresh)
+if ~isfield(Arg, 'thresh') || isempty(Arg.thresh)
     error('Not enough input arguments.')
 end
-if ~isfield(args, 'chans') || isempty(args.chans)
-    args.chans = 1:EEG.nbchan;
+if ~isfield(Arg, 'chans') || isempty(Arg.chans)
+    Arg.chans = 1:EEG.nbchan;
 end
-if ~isfield(args, 'pnts') || isempty(args.pnts)
-    args.pnts = 1:EEG.pnts;
+if ~isfield(Arg, 'win') || isempty(Arg.win)
+    Arg.win = [EEG.xmin EEG.xmax] * 1000;
 end
+Arg.win = round((Arg.win / 1000 - EEG.xmin) * EEG.srate + 1);
+Arg.pnts = Arg.win(1):Arg.win(2);
 
 if ~isfield(EEG, 'reject') || ~isfield(EEG.reject, 'rejthreshE') || isempty(EEG.reject.rejthreshE),
     EEG.reject.rejthreshE = zeros(EEG.nbchan, EEG.trials);
 end
 
-EEG.reject.rejthreshE(args.chans, :) = EEG.reject.rejthreshE(args.chans, :) | squeeze(max(EEG.data(args.chans, args.pnts, :), [], 2) - min(EEG.data(args.chans, args.pnts, :), [], 2) > args.thresh);
+EEG.reject.rejthreshE(Arg.chans, :) = EEG.reject.rejthreshE(Arg.chans, :) | squeeze(max(EEG.data(Arg.chans, Arg.pnts, :), [], 2) - min(EEG.data(Arg.chans, Arg.pnts, :), [], 2) > Arg.thresh);
 EEG.reject.rejthresh = any(EEG.reject.rejthreshE);
 
 disp([num2str(length(EEG.reject.rejthresh(EEG.reject.rejthresh))) '/' num2str(EEG.trials) ' trials marked for rejection.'])
