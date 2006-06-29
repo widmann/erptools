@@ -81,12 +81,12 @@ Hdr.nChans = str2double(fread(fid, 4, '*char')');
 Hdr.labels = cellstr(fread(fid, [16 Hdr.nChans], '*char')');
 Hdr.type = cellstr(fread(fid, [80 Hdr.nChans], '*char')');
 Hdr.unit = cellstr(fread(fid, [8 Hdr.nChans], '*char')');
-Hdr.physMin = str2double(fread(fid, [8 Hdr.nChans], '*char')');
-Hdr.physMax = str2double(fread(fid, [8 Hdr.nChans], '*char')');
-Hdr.digMin = str2double(fread(fid, [8 Hdr.nChans], '*char')');
-Hdr.digMax = str2double(fread(fid, [8 Hdr.nChans], '*char')');
+Hdr.physMin = str2num(fread(fid, [8 Hdr.nChans], '*char')');
+Hdr.physMax = str2num(fread(fid, [8 Hdr.nChans], '*char')');
+Hdr.digMin = str2num(fread(fid, [8 Hdr.nChans], '*char')');
+Hdr.digMax = str2num(fread(fid, [8 Hdr.nChans], '*char')');
 Hdr.filter = cellstr(fread(fid, [80 Hdr.nChans], '*char')');
-Hdr.nSamples = str2double(fread(fid, [8 Hdr.nChans], '*char')');
+Hdr.nSamples = str2num(fread(fid, [8 Hdr.nChans], '*char')');
 Hdr.reserved = cellstr(fread(fid, [32 Hdr.nChans], '*char')');
 
 % Consistent sampling rate
@@ -116,7 +116,10 @@ if isfield(Arg, 'chans') && ~isempty(Arg.chans)
 end
 
 % EEG structure
-EEG = eeg_emptyset; 
+try
+    EEG = eeg_emptyset;
+catch
+end
 EEG.setname = 'BDF file';
 EEG.filename = Arg.filename;
 EEG.filepath = Arg.pathname;
