@@ -12,6 +12,7 @@
 %   'chans'       - vector of integers channels to read
 %   'statusChan'  - scalar integer status channel {default channel of
 %                   type 'Triggers and Status' in header}
+%   'holdValue'   - scalar integer hold value {default 0}
 %
 % Outputs:
 %   EEG           - EEGLAB EEG structure
@@ -63,6 +64,11 @@ end
 [fid, message] = fopen(fullfile(Arg.pathname, Arg.filename));
 if fid == -1
     error(message)
+end
+
+% Arguments
+if ~isfield(Arg, 'holdValue') || isempty(Arg.holdValue)
+    Arg.holdValue = 0;
 end
 
 % Header
@@ -152,7 +158,7 @@ for iBlock = 1 : Hdr.nBlocks
     buf = reshape(castArray * single(fread(fid, [3, Hdr.nSamples * Hdr.nChans], '*uint8')), [Hdr.nSamples Hdr.nChans])';
 
     % Unsigned to signed
-    isNeg = buf > int24max;
+    isNeg = Hdr.isData(ones(1, Hdr.nSamples), :)' & buf > int24max;
     buf(isNeg) = buf(isNeg) - int24sign;
 
     % Scale
@@ -205,7 +211,7 @@ if size(status, 1) == 1
     typeArray(1 : length(latArray)) = {'boundary'};
 
     % Triggers
-    trigArray = rem(status, 2 ^ 16);
+    trigArray = rem(status, 2 ^ 16) - Arg.holdValue;
     trigArray(~diff([0 trigArray])) = 0;
     latArray = [latArray num2cell(find(trigArray))];
     typeArray = [typeArray cellstr(num2str(trigArray(trigArray ~= 0)', '%d'))'];
