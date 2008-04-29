@@ -18,7 +18,7 @@
 %   com       - history string
 %
 % References:
-%   [1] MÃ¼ller, M. M., Keil, A., Kissler, J., Gruber, T. (1999).
+%   [1] Müller, M. M., Keil, A., Kissler, J., Gruber, T. (1999).
 %       Suppression of the auditory middle-latency response and evoked
 %       gamma-band response in a paired-click paradigm. Experimental
 %       Brain Research, 136, 474-479.
@@ -74,7 +74,7 @@ end
 [b, a] = butter(Arg.forder / 2, Arg.lowpass / (EEG.srate / 2));
 
 % Demodulation
-carArray = exp(2 * pi * i * 40 * (0:EEG.pnts - 1) / EEG.srate);
+carArray = exp(2 * pi * i * Arg.freq * (0:EEG.pnts - 1) / EEG.srate);
 for iChan = 1:EEG.nbchan
     for iTrial = 1:EEG.trials
         x = double(EEG.data(iChan, :, iTrial)) .* carArray;
