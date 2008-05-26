@@ -213,8 +213,10 @@ if size(status, 1) == 1
     % Triggers
     trigArray = rem(status, 2 ^ 16) - Arg.holdValue;
     trigArray(~diff([0 trigArray])) = 0;
-    latArray = [latArray num2cell(find(trigArray))];
-    typeArray = [typeArray cellstr(num2str(trigArray(trigArray ~= 0)', '%d'))'];
+    if any(trigArray ~= 0)
+        latArray = [latArray num2cell(find(trigArray))];
+        typeArray = [typeArray cellstr(num2str(trigArray(trigArray ~= 0)', '%d'))'];
+    end
 
     % Sort by latency
     [foo, order] = sort([latArray{:}]);
