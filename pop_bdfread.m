@@ -65,6 +65,7 @@ end
 if fid == -1
     error(message)
 end
+disp(['pop_bdfread(): loading file ' fullfile(Arg.pathname, Arg.filename) '...'])
 
 % Arguments
 if ~isfield(Arg, 'holdValue') || isempty(Arg.holdValue)
@@ -146,10 +147,10 @@ EEG.ref = 'common';
 EEG.data = zeros(EEG.nbchan, EEG.pnts, 'single');
 status = zeros(length(find(Hdr.isStatus)), EEG.pnts, 'single');
 
-% Initialize progress bar
-nProgBarSteps = 20;
-progBarArray = ceil(linspace(Hdr.nBlocks / nProgBarSteps, Hdr.nBlocks, nProgBarSteps));
-progBarHandle = waitbar(0, '0% done', 'Name', 'Reading bdf file -- pop_bdfread()');
+% Initialize progress indicator
+nSteps = 20;
+step = 0;
+strLength = fprintf(1, '0%%');
 tic
 
 for iBlock = 1 : Hdr.nBlocks
@@ -168,22 +169,16 @@ for iBlock = 1 : Hdr.nBlocks
     EEG.data(:, Hdr.nSamples * (iBlock - 1) + 1 : Hdr.nSamples * (iBlock - 1) + Hdr.nSamples) = buf(Hdr.isData, :);
     status(:, Hdr.nSamples * (iBlock - 1) + 1 : Hdr.nSamples * (iBlock - 1) + Hdr.nSamples) = buf(Hdr.isStatus, :);
 
-    % Update progress bar
-    if iBlock >= progBarArray(1)
-        progBarArray(1) = [];
-        p = (nProgBarSteps - length(progBarArray)) / nProgBarSteps;
-        waitbar(p, progBarHandle, [num2str(p * 100) '% done, ' num2str(ceil((1 - p) / p * toc)) ' s left']);
-    end
+    % Update progress indicator
+    [step, strLength] = mywaitbar(iBlock, Hdr.nBlocks, step, nSteps, strLength);
     
 end
 
 % Close file
 fclose(fid);
 
-% Deinitialize progress bar
-if exist('progBarHandle', 'var')
-    close(progBarHandle)
-end
+% Deinitialize progress indicator
+fprintf(1, '\n')
 
 % Event structure
 if size(status, 1) == 1
@@ -232,3 +227,17 @@ end
 
 % History string
 com = ['EEG = pop_bdfread(' arg2str(Arg) ');'];
+
+end
+
+function [step, strLength] = mywaitbar(compl, total, step, nSteps, strLength)
+
+tmp = floor(compl / total * nSteps);
+if tmp > step
+    fprintf(1, [repmat('\b', 1, strLength) '%s'], repmat('.', 1, tmp - step))
+    step = tmp;
+    ete = ceil(toc / step * (nSteps - step));
+    strLength = fprintf(1, ' %d%%, ETE %02d:%02d', floor(step * 100 / nSteps), floor(ete / 60), mod(ete, 60));
+end
+
+end
