@@ -39,7 +39,7 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-% $Id$
+% $Id: pop_bdfread.m 9 2009-12-22 15:11:14Z widmann $
 
 function [EEG, com, Hdr] = pop_bdfread(varargin)
 
@@ -59,7 +59,7 @@ if ~isfield(Arg, 'filename') || isempty(Arg.filename)
     error('Not enough input arguments.')
 end
 if ~isfield(Arg, 'pathname')
-    Arg.pathname = pwd;
+    Arg.pathname = [];
 end
 [fid, message] = fopen(fullfile(Arg.pathname, Arg.filename));
 if fid == -1
@@ -150,7 +150,8 @@ status = zeros(length(find(Hdr.isStatus)), EEG.pnts, 'single');
 % Initialize progress indicator
 nSteps = 20;
 step = 0;
-strLength = fprintf(1, '0%%');
+fprintf(1, 'pop_bdfread(): |');
+strLength = fprintf(1, [repmat(' ', 1, nSteps - step) '|   0%%']);
 tic
 
 for iBlock = 1 : Hdr.nBlocks
@@ -201,6 +202,7 @@ if size(status, 1) == 1
 
     % Boundaries
     dcArray = bitget(status, 17);
+    dcArray(1) = 1; % Mandatory boundary event at file start
     dcArray(~diff([0 dcArray])) = 0;
     latArray = num2cell(find(dcArray | cmsArray));
     typeArray(1 : length(latArray)) = {'boundary'};
@@ -232,12 +234,13 @@ end
 
 function [step, strLength] = mywaitbar(compl, total, step, nSteps, strLength)
 
+progStrArray = '/-\|';
 tmp = floor(compl / total * nSteps);
 if tmp > step
-    fprintf(1, [repmat('\b', 1, strLength) '%s'], repmat('.', 1, tmp - step))
+    fprintf(1, [repmat('\b', 1, strLength) '%s'], repmat('=', 1, tmp - step))
     step = tmp;
     ete = ceil(toc / step * (nSteps - step));
-    strLength = fprintf(1, ' %d%%, ETE %02d:%02d', floor(step * 100 / nSteps), floor(ete / 60), mod(ete, 60));
+    strLength = fprintf(1, [repmat(' ', 1, nSteps - step) '%s %3d%%, ETE %02d:%02d'], progStrArray(mod(step - 1, 4) + 1), floor(step * 100 / nSteps), floor(ete / 60), mod(ete, 60));
 end
 
 end
