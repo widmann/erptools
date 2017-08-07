@@ -244,3 +244,41 @@ if tmp > step
 end
 
 end
+
+function str = arg2str(arg)
+
+if isstruct(arg)
+    str = '';
+    fieldArray = fieldnames(arg);
+    arg = struct2cell(arg);
+    for iArg = 1:length(arg)
+        if ischar(arg{iArg})
+            str = [str '''' fieldArray{iArg} ''', ''' arg{iArg} ''''];
+        elseif isnumeric(arg{iArg}) || islogical(arg{iArg})
+            str = [str '''' fieldArray{iArg} ''', ' mat2str(arg{iArg})];
+        elseif iscell(arg{iArg})
+            str = [str '''' fieldArray{iArg} ''', ' arg2str(arg{iArg})];
+        end
+        if iArg < length(arg)
+            str = [str ', '];
+        end
+    end
+elseif iscell(arg)
+    str = '{';
+    for iArg = 1:length(arg)
+        if ischar(arg{iArg})
+            str = [str '''' arg{iArg} ''''];
+        elseif isnumeric(arg{iArg}) || islogical(arg{iArg})
+            str = [str mat2str(arg{iArg})];
+        elseif iscell(arg{iArg})
+            str = [str arg2str(arg{iArg})];
+        end
+        if iArg < length(arg)
+            str = [str ' '];
+        else
+            str = [str '}'];
+        end
+    end
+end
+
+end
